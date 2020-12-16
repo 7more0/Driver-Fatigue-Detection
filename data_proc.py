@@ -1,17 +1,24 @@
-from opr_tools import video_to_imgs
+from opr_tools import video_to_imgs, dataset_divide, video_length_check
 import os
 import shutil
 import numpy as np
 import cv2
 import random
-# from keras.utils import Sequence
+import pickle
 
+'''
+    Data preprocessing.
+'''
 
 def video_seg_imgs(folder, out_path):
+    '''
+        Convert videos in folder to frames. Write frames to out_path.
+    '''
     for video in os.listdir(folder):
         video_to_imgs(folder, video, out_path, frame_gap=5)
 
     return True
+
 
 def read_data(read_path, frame_path, clip_length):
     '''
@@ -33,10 +40,10 @@ def read_data(read_path, frame_path, clip_length):
 
     return clips
 
-def clip_generator(clips_dict, frame_path, feature_net, labels, batch_size=2, img_size=(299, 299)):
+
+def clip_generator(clips_dict, frame_path, labels, batch_size=2, img_size=(299, 299)):
     '''
-        yield [frames, label] of one clip a time.
-    :return:
+        yield [frames, label] of one clip a time for feature extracting network.
     '''
     cls_n = len(clips_dict)
     clip_index = 0
@@ -49,21 +56,22 @@ def clip_generator(clips_dict, frame_path, feature_net, labels, batch_size=2, im
         for cls, clip_list in clips_dict.items():
             # travel all classes
             # select batch_size/class_num sample clip for class cls sample by index
-            cls_clips_count = clip_samples[cls][clip_index: clip_index+(batch_size//cls_n)]
-            clip_index += batch_size//cls_n
-            if clip_index>=len(clips_dict[cls]):
+            cls_clips_count = clip_samples[cls][clip_index: clip_index + (batch_size // cls_n)]
+            clip_index += batch_size // cls_n
+            if clip_index >= len(clips_dict[cls]):
                 clip_index = 0
             for clip in cls_clips_count:
                 # extract feature vector for each frame in sample clip
                 clip_frames = clip_list[clip]
                 frames = []
                 for frame in clip_frames:
-                    frame = ((cv2.resize(cv2.imread(os.path.join(frame_path, cls, frame)), (299, 299), interpolation=cv2.INTER_LINEAR)/255)-0.5)*2
+                    frame = ((cv2.resize(cv2.imread(os.path.join(frame_path, cls, frame)), (299, 299),
+                                         interpolation=cv2.INTER_LINEAR) / 255) - 0.5) * 2
                     frames.append(frame)
                 frames = np.array(frames)
-                feature = feature_net.predict_on_batch(frames)
+                # feature = feature_net.predict_on_batch(frames)
                 # feature = np.zeros((90, 1024))
-                sample_batch.append(feature)
+                sample_batch.append(frames)
                 label_batch.append(labels[cls])
 
         sample_batch = np.array(sample_batch)
@@ -74,26 +82,46 @@ def clip_generator(clips_dict, frame_path, feature_net, labels, batch_size=2, im
     return clip_generator
 
 
-if __name__ == '__main__':
-    clip_path = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/val/yawning/'
-    frame_path = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/val/val_frames/yawning/'
-    count = 0
-    # for clip in os.listdir(clip_path):
-    #     if cv2.VideoCapture(clip_path+clip).get(7)>=90:
-    #         video_to_imgs(clip_path, clip, out_path=frame_path, frame_num=90)
-    #         count+=1
-    # print(count)
-    read_path = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/train/video/'
-    frame_path = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/train/train_frames/'
-    clips = read_data(read_path, frame_path, 90)
-    labels = {'normal': np.array([1, 0]),
-              'yawning': np.array([0, 1])}
-    feature_model = 0
-    generator = clip_generator(clips, frame_path, feature_model, labels)
+def feature_generator(clips_feature, labels, batch_size=16, clip_feature_shape=(90, 1024)):
+    '''
+        yield batch size clips in frames' feature form for lstm training.
+    :param clips_feature: feature dictionary load from file.
+    :param labels: class labels, dict
+    :param clip_feature_shape: presumed yielded feature shape as (frames, frame feature shape)
+    '''
+    cls_n = len(clips_feature)
+    clip_index = 0
+    clean_feature = {}
+    # data cleaning, delete feature data with wrong shape
+    for cls, clips_feature_list in clips_feature.items():
+        clean_feature[cls] = []
+        for clip_feature in clips_feature_list:
+            if clip_feature.shape == clip_feature_shape:
+                clean_feature[cls].append(clip_feature)
+    clips_feature = clean_feature
     while True:
-        test = next(generator)
-        print(test[0].shape, test[1].shape)
-    # labels = {'normal': np.array([1, 0, 0]),
-    #           'talking': np.array([0, 1, 0]),
-    #           'yawning': np.array([0, 0, 1])}
+        sample_batch = []
+        label_batch = []
+        for cls, clip_feature_list in clips_feature.items():
+            # travel all classes
+            # select batch_size/class_num sample clip for class cls sample by index
+            sel_clips_feature = clip_feature_list[clip_index: clip_index + (batch_size // cls_n)]
+            clip_index += batch_size // cls_n
+            if clip_index >= (len(clips_feature[cls]) - batch_size):
+                # yield samples more than dataset samples
+                clip_index = 0
+            cls_labels = [labels[cls] for i in range(batch_size // cls_n)]
+
+            sample_batch.extend(sel_clips_feature)
+            label_batch.extend(cls_labels)
+
+        sample_batch = np.stack(sample_batch, axis=0)
+        label_batch = np.stack(label_batch, axis=0)
+
+        yield sample_batch, label_batch
+    return feature_generator
+
+
+if __name__ == '__main__':
+
     pass

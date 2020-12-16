@@ -1,14 +1,12 @@
-'''
-    processing tools for data processing.
-'''
 import numpy as np
 import random
 import cv2
 import copy
-import math
 import os
 import shutil
-
+'''
+    processing tools for data processing.
+'''
 def augment(img_data, config, augment=True):
     assert 'filepath' in img_data
     assert 'bboxes' in img_data
@@ -113,7 +111,7 @@ def frame_to_video(frame_path, out_path, video_name, fps=16):
     for i in range(len(filelist)):
         filelist[i] = video_name+str(filelist[i])+'.jpg'
     file_path = os.path.join(out_path, video_name) + ".mp4"
-    # fourcc = cv2.VideoWriter_fourcc('I', '4', '2', '0')  # 不同视频编码对应不同视频格式（例：'I','4','2','0' 对应avi格式）
+    # fourcc = cv2.VideoWriter_fourcc('I', '4', '2', '0')
     size = cv2.imread(os.path.join(frame_path, filelist[0])).shape[:2]
     # notice:frame size should be (width, height)
     video = cv2.VideoWriter(file_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1], size[0]))
@@ -125,37 +123,38 @@ def frame_to_video(frame_path, out_path, video_name, fps=16):
     video.release()
 
 
-if __name__=='__main__':
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/dash_female_split_output/Yawning/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/yawning/')
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/dash_male_split_output/Yawning/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/yawning/')
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/mirror_female_split_output/Yawning/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/yawning/')
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/mirror_male_split_output/Yawning/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/yawning/')
-    #
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/mirror_female_split_output/Normal/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/normal/')
-    # video_seg_imgs(
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/mirror_male_split_output/Normal/',
-    #     'E:/System/Desktop/fatigue-drive-yawning-detection-master/fatigue-drive-yawning-detection-master/dataset/train_lst/train_frames/normal/')
+def dataset_divide(data_path, ratio=0.25):
+    '''
+        divide dataset into training and val dataset.
+    :param data_path: path to train data. (format: train_data/classes/data)
+    :param ratio: val/train
+    '''
+    classes = os.listdir(data_path)
+    os.mkdir(data_path.strip('/') + '/val')
+    os.mkdir(data_path.strip('/') + '/train')
+    for cls in classes:
+        os.mkdir(data_path.strip('/') + '/val/' + cls)
+        file_list = os.listdir(os.path.join(data_path, cls))
+        sel_list = random.sample(file_list, int(len(file_list) * ratio))
+        for sel_file in sel_list:
+            shutil.move('{}/{}'.format(os.path.join(data_path, cls), sel_file),
+                        '{}/{}'.format(data_path.strip('/') + '/val/' + cls, '/' + sel_file))
+        shutil.move(os.path.join(data_path, cls), os.path.join(os.path.join(data_path, 'train'), cls))
 
-    # path = 'E:/Outpost/Projects/GraduationProject/Datasets/YawDD/Train/Frames/'
-    # frame_list = os.listdir(path)
-    # for frame in frame_list:
-    #     # if 'Normal' in frame:
-    #     #     shutil.move(path+frame, path+'normal/'+frame)
-    #     if 'Yawning' in frame:
-    #         shutil.move(path+frame, path+'yawning/'+frame)
-    path = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/normal/'
-    path1 = 'E:/System/Desktop/fatigue-drive-yawning-detection-master/dataset/train_lst/train_video/val/'
-    file_list = os.listdir(path)
-    sel_file = random.sample(file_list, 28)
-    for file in sel_file:
-        shutil.move(path + file, path1 + 'normal/' + file)
+    return True
+
+
+def video_length_check(path, frame_num=90):
+    '''
+        check video length and move videos short than threshold to /del folder
+    '''
+    os.mkdir(os.path.join(path, 'del'))
+    for clip in os.listdir(path):
+        video = cv2.VideoCapture(os.path.join(path, clip))
+        if video.get(7)<90:
+            shutil.move('{}/{}'.format(path, clip),
+                        '{}/{}'.format(os.path.join(path, 'del'), clip))
+
+    return True
+
+
