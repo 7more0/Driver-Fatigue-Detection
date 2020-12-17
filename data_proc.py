@@ -1,4 +1,4 @@
-from opr_tools import video_to_imgs, dataset_divide, video_length_check
+from opr_tools import video_to_imgs, dataset_divide, video_length_check, test_video_length_check
 import os
 import shutil
 import numpy as np
@@ -36,7 +36,13 @@ def read_data(read_path, frame_path, clip_length):
         frame_list = os.listdir(os.path.join(frame_path, class_clips))
         clips[class_clips] = {}
         for clip in clip_list:
-            clips[class_clips][clip] = [frame for frame in frame_list if clip.strip('.avi') in frame]
+            if test_video_length_check(os.path.join(os.path.join(read_path, class_clips), clip)):
+                clips[class_clips][clip] = [frame for frame in frame_list if clip.strip('.avi') in frame]
+                if len(clips[class_clips][clip])>clip_length:
+                    # keep clip frame number fixed
+                    clips[class_clips][clip] = clips[class_clips][clip][:clip_length]
+
+
 
     return clips
 
@@ -65,7 +71,7 @@ def clip_generator(clips_dict, frame_path, labels, batch_size=2, img_size=(299, 
                 clip_frames = clip_list[clip]
                 frames = []
                 for frame in clip_frames:
-                    frame = ((cv2.resize(cv2.imread(os.path.join(frame_path, cls, frame)), (299, 299),
+                    frame = ((cv2.resize(cv2.imread(os.path.join(frame_path, cls, frame)), img_size,
                                          interpolation=cv2.INTER_LINEAR) / 255) - 0.5) * 2
                     frames.append(frame)
                 frames = np.array(frames)
@@ -74,8 +80,8 @@ def clip_generator(clips_dict, frame_path, labels, batch_size=2, img_size=(299, 
                 sample_batch.append(frames)
                 label_batch.append(labels[cls])
 
-        sample_batch = np.array(sample_batch)
-        label_batch = np.array(label_batch)
+        sample_batch = np.stack(sample_batch, axis=0)
+        label_batch = np.stack(label_batch, axis=0)
 
         yield sample_batch, label_batch
 

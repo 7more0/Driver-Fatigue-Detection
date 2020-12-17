@@ -146,7 +146,7 @@ def dataset_divide(data_path, ratio=0.25):
 
 def video_length_check(path, frame_num=90):
     '''
-        check video length and move videos short than threshold to /del folder
+        for all videos in path(none-recursive), check video length and move videos short than threshold to /del folder
     '''
     os.mkdir(os.path.join(path, 'del'))
     for clip in os.listdir(path):
@@ -156,5 +156,34 @@ def video_length_check(path, frame_num=90):
                         '{}/{}'.format(os.path.join(path, 'del'), clip))
 
     return True
+
+def test_video_length_check(video_path, frame_length=90):
+    video = cv2.VideoCapture(video_path)
+    if video.get(7)>=frame_length:
+        return True
+    else:
+        return False
+
+
+if __name__ == '__main__':
+    test_path = ''
+    os.mkdir(os.path.join(test_path, 'test'))
+    os.mkdir(os.path.join(os.path.join(test_path, 'test'), 'normal'))
+    os.mkdir(os.path.join(os.path.join(test_path, 'test'), 'talking'))
+    os.mkdir(os.path.join(os.path.join(test_path, 'test'), 'yawning'))
+    video_count = 0
+    for video_folder in os.listdir(test_path):
+        for video_cls in os.listdir(os.path.join(test_path, video_folder)):
+            video_base_path = os.path.join(os.path.join(test_path, video_folder), video_cls)
+            frames_out_path = os.path.join(os.path.join(test_path, 'test'), video_cls)
+            for video in os.listdir(video_base_path):
+                if test_video_length_check(os.path.join(video_base_path, video)):
+                    # video_to_imgs(video_base_path, video, out_path=frames_out_path+'/')
+                    video_count += 1
+                    print(video)
+    print(video_count)
+
+
+
 
 
