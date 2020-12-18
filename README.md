@@ -1,8 +1,8 @@
 # Driver-Fatigue-Detection
 
-Driver fatigue detection model using Inception v3 and LSTM. Train and test on YawDD dataset.  
+Driver fatigue detection model using Inception v3 and LSTM. Model was trained and tested on YawDD dataset.  
 This project contains a deep neural network model for driver drowsiness detection using video and facial feature.  
-No human face or facial organ detection is required in this project.
+No human face or facial organ detection is required.
 
 ## Requirement
     python==3.7
@@ -15,16 +15,50 @@ No human face or facial organ detection is required in this project.
 * divide training data to train and val dataset with tools in `opr_tools.py`.
 #### for Inception model training
 * split videos into frames with `data_proc.py` functions.
-
 #### for LSTM model training
 * run `feature_extract.py` to extract frame features of all training data.
+#### preprocessed data structure
+    YawDD/
+        train/
+            CNN/
+                train/
+                    normal/
+                    yawning/
+                val/
+                    normal/
+                    yawning/
+            lstm/
+                train/
+                    train_video/
+                        normal/
+                        ...
+                    train_frame/
+                        normal/
+                        ...
+                val/
+                    val_video/
+                        normal/
+                        ...
+                    val_frame/
+                        normal/
+                        ...
+        test/
+            test_videos/
+                normal/
+                ...
+            test_frames/
+                normal/
+                ...
+        
 
-
-## Training
+## Train
 2. run `cnn_train.py` to train Inception model. In this case, I used only frames from videos with normal/yawning label.
 2. run `lstm_train.py` to train LSTM model.
 
+## Test
+1. run `test.py` to test model on test dataset.
+
 ## Notice
-* trained model weights and preprocessed data will be write in `./out`
+* trained model weights and preprocessed data will be writen in `./out`
 * log path of TensorBoard is `./out/tensorboard`
 
