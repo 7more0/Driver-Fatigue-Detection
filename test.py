@@ -2,14 +2,15 @@ from model import Inception_model, LSTM_model
 import numpy as np
 from keras.models import Model
 from data_proc import clip_generator, read_data
+from ModelConfig import ModelConfig
 
+model_config = ModelConfig()
 # detector config
 test_frame_path = './Datasets/YawDD/test/test_frames'
 test_video_path = './Datasets/YawDD/test/test_videos'
-clip_length = 90
-batch_size = 4
-labels = labels = {'normal': np.array([1, 0], dtype='float32'),
-                   'yawning': np.array([0, 1], dtype='float32')}
+clip_length = model_config.lstm_step
+batch_size = model_config.test_sample_batch
+labels = model_config.labels
 # load data
 clips = read_data(test_video_path, test_frame_path, clip_length=clip_length)
 sample_num = np.sum(np.array([len(clip_list) for cls, clip_list in clips.items()]))
@@ -40,10 +41,15 @@ while sample_count<=sample_num:
         ground_truth = max([i for i in range(len(labels))], key=lambda i: clip_batch_label[clip_index, i])
         if predict_label==ground_truth:
             tp_sample += 1
+            sample_count += 1
+            print(1)
+        else:
+            sample_count += 1
+            print(0)
 
-    sample_count += batch_size
 
 test_acc = tp_sample/sample_count
+print('hit: {}'.format(tp_sample))
 print('Test accuracy: {:.2f}%'.format(test_acc*100))
 
 

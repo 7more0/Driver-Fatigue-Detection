@@ -4,6 +4,7 @@ from keras.models import Model
 from data_proc import clip_generator, read_data
 import pickle
 from model import Inception_model
+from ModelConfig import ModelConfig
 '''
     Extract frame feature with retrained Inception model.
 '''
@@ -13,16 +14,16 @@ InceptionModel.load_weights('./out/Inception_weight.h5')
 feature_model = Model(inputs=InceptionModel.input, outputs=InceptionModel.get_layer('feature_out').output)
 
 # train data path config
+model_config = ModelConfig()
 read_path = './Datasets/YawDD/lstm/train/video'
 frame_path = './Datasets/YawDD/lstm/train/train_frames'
-frames_per_video = 90       # input dimension of lstm node and represents the length of video representation learning
+frames_per_video = model_config.lstm_step       # input dimension of lstm node and represents the length of video representation learning
 pro_batch_size = 8
-labels = {'normal': np.array([1, 0], dtype='float32'),
-          'yawning': np.array([0, 1], dtype='float32')}
+labels = model_config.labels
 
 clips = read_data(read_path, frame_path, frames_per_video)
 sample_num = np.sum(np.array([len(clip_list) for cls, clip_list in clips.items()]))
-clip_data_generator = clip_generator(clips, frame_path, labels, batch_size=pro_batch_size, img_size=(299, 299))
+clip_data_generator = clip_generator(clips, frame_path, labels, batch_size=pro_batch_size, img_size=model_config.cnn_input_shape)
 
 # extract all clips' feature
 step_count = 0
@@ -51,7 +52,7 @@ frame_path = './Datasets/YawDD/lstm/val/val_frames'
 
 clips = read_data(read_path, frame_path, frames_per_video)
 sample_num = np.sum(np.array([len(clip_list) for cls, clip_list in clips.items()]))
-clip_data_generator = clip_generator(clips, frame_path, labels, batch_size=pro_batch_size, img_size=(299, 299))
+clip_data_generator = clip_generator(clips, frame_path, labels, batch_size=pro_batch_size, img_size=model_config.cnn_input_shape)
 
 # extract all clips' feature
 step_count = 0

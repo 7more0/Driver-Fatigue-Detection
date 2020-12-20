@@ -1,7 +1,8 @@
 from keras import layers
 from keras.models import Model
 from keras.applications.inception_v3 import InceptionV3
-from keras.optimizers import adam
+from keras.optimizers import sgd
+import numpy as np
 
 def fine_tune_setup(base_model, fixed_layers=100):
     # fine tune model from Inception block 6
@@ -36,4 +37,33 @@ def LSTM_model(input_dim=90, feature_dim=1024, output_dim=2):
     lstmModel = Model(inputs=lstm_input, outputs=cls_out)
     # lstmModel.compile(optimizer=Adam(lr=0.001, decay=1e-6), loss='categorical_crossentropy', metrics=['accuracy'])
     return lstmModel
+
+
+def End_to_end_model(time_step, feature_dim, output_dim):
+    frames_input = layers.Input(shape=(None, 299, 299, 3), dtype='float32', name='frame_input')
+
+    InceptionModel = Inception_model()
+    InceptionModel.load_weights('./out/Inception_weight.h5')
+    feature_model = Model(inputs=InceptionModel.input, outputs=InceptionModel.get_layer('feature_out').output)
+    # apply feature model to each time step of input
+    feature_output = layers.TimeDistributed(feature_model, input_shape=(299, 299, 3))(frames_input)
+
+    # apply lstm model to extracted feature
+    lstmModel = LSTM_model(time_step, feature_dim, output_dim)
+    # mask padding value
+    feature_output = layers.Masking(mask_value=0., input_shape=(time_step, feature_dim))(feature_output)
+    model_output = lstmModel(inputs=feature_output)
+
+    end_to_end_model = Model(inputs=frames_input, outputs=model_output)
+
+    return end_to_end_model
+
+
+if __name__ == '__main__':
+    End_to_End_Model = End_to_end_model(90, 1024, 2)
+    End_to_End_Model.compile(optimizer=sgd(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+
+
+
+
 
