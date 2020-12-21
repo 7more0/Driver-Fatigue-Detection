@@ -11,8 +11,8 @@ No human face or facial organ detection is required.
     opencv, numpy
 
 ## Data preprocessing
-* split original videos with `yawn_split_video.py` in `Datasets/YawDD/seg_list/`.
-* divide training data to train and val dataset with tools in `opr_tools.py`.
+1. split original videos with `yawn_split_video.py` in `Datasets/YawDD/seg_list/`.
+2. divide training data to train and val dataset with tools in `opr_tools.py`.
 #### for Inception model training
 * split videos into frames with `data_proc.py` functions.
 #### for LSTM model training
@@ -52,7 +52,7 @@ No human face or facial organ detection is required.
         
 
 ## Train
-2. run `cnn_train.py` to train Inception model. In this case, I used only frames from videos with normal/yawning label.
+1. run `cnn_train.py` to train Inception model. In this case, I used only frames from videos with normal/yawning label.
 2. run `lstm_train.py` to train LSTM model.
 
 ## Test
