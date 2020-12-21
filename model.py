@@ -51,10 +51,11 @@ def End_to_end_model(time_step, feature_dim, output_dim):
     # apply lstm model to extracted feature
     lstmModel = LSTM_model(time_step, feature_dim, output_dim)
     # mask padding value
-    feature_output = layers.Masking(mask_value=0., input_shape=(time_step, feature_dim))(feature_output)
+    # feature_output = layers.Masking(mask_value=0., input_shape=(time_step, feature_dim))(feature_output)
     model_output = lstmModel(inputs=feature_output)
 
     end_to_end_model = Model(inputs=frames_input, outputs=model_output)
+    end_to_end_model._get_distribution_strategy = lambda: None
 
     return end_to_end_model
 

@@ -20,8 +20,8 @@ clip_gen = clip_generator(clips, test_frame_path, labels, batch_size=batch_size)
 InceptionModel = Inception_model()
 InceptionModel.load_weights('./out/Inception_weight.h5')
 feature_model = Model(inputs=InceptionModel.input, outputs=InceptionModel.get_layer('feature_out').output)
-lstmModel = LSTM_model()
-lstmModel.load_weights('./out/lstm_weight.h5')
+lstmModel = LSTM_model(model_config.lstm_step)
+lstmModel.load_weights('./out/lstm_weight_10.h5')
 
 # test
 test_step = 0
@@ -49,7 +49,7 @@ while sample_count<=sample_num:
 
 
 test_acc = tp_sample/sample_count
-print('hit: {}'.format(tp_sample))
+print('hit: {}; total: {}'.format(tp_sample, sample_count))
 print('Test accuracy: {:.2f}%'.format(test_acc*100))
 
 

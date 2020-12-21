@@ -1,11 +1,9 @@
 from opr_tools import video_to_imgs, dataset_divide, video_length_check, test_video_length_check
 import os
-import shutil
 import numpy as np
 import cv2
-import random
-import pickle
-
+import re
+import math
 '''
     Data preprocessing.
 '''
@@ -20,16 +18,19 @@ def video_seg_imgs(folder, out_path):
     return True
 
 
-def read_data(read_path, frame_path, clip_length):
+def read_data(read_path, frame_path, clip_length, sample_ratio=1):
     '''
         sort video data and relate frames to videos
     :param read_path: videos path
     :param frame_path: frames path
     :param clip_length: least frame number of clip
+    :param sample_ratio: sample clip frames per 1/sample_ratio frames
     :return:
         clips: dict{'class1': ['ClipsOfClass1': [ListOfClipFrames]]}
     '''
     clips = {}
+    sample_gap = int(1//sample_ratio)
+    index_pattern = re.compile(r'(\d*$)')
     all_class_clips = os.listdir(read_path)
     for class_clips in all_class_clips:
         clip_list = os.listdir(os.path.join(read_path, class_clips))
@@ -37,7 +38,18 @@ def read_data(read_path, frame_path, clip_length):
         clips[class_clips] = {}
         for clip in clip_list:
             if test_video_length_check(os.path.join(os.path.join(read_path, class_clips), clip)):
-                clips[class_clips][clip] = [frame for frame in frame_list if clip.strip('.avi') in frame]
+                sel_frames = [frame for frame in frame_list if clip.strip('.avi') in frame]
+                # extract frame index
+                frame_index = [int(re.search(index_pattern, frame.strip('.jpg')).group())
+                                  for frame in sel_frames]
+                # select frame by sample ratio
+                sel_frames = [sel_frames[f_index] for f_index in range(len(frame_index))
+                              if frame_index[f_index] % sample_gap==0]
+                # sort frames of one clip by frame index
+                frame_index = [int(re.search(index_pattern, frame.strip('.jpg')).group())
+                               for frame in sel_frames]
+                clips[class_clips][clip] = sorted(sel_frames,
+                                                  key=lambda i: frame_index[sel_frames.index(i)])
                 if len(clips[class_clips][clip])>clip_length:
                     # keep clip frame number fixed
                     clips[class_clips][clip] = clips[class_clips][clip][:clip_length]
@@ -129,5 +141,14 @@ def feature_generator(clips_feature, labels, batch_size=16, clip_feature_shape=(
 
 
 if __name__ == '__main__':
+    # train_read_path = './Datasets/YawDD/train/lstm/train/video'
+    # train_frame_path = './Datasets/YawDD/train/lstm/train/train_frames'
+    #
+    # # read_data(train_read_path, train_frame_path, 90, 1/3)
+    # #
+    # # test = '39-MaleGlasses-Yawning-clip-088.jpg'
+    # # index_mantissa_pattern = re.compile(r'(\d$)')
+    # # mantissa = re.search(index_mantissa_pattern, test.strip('.jpg')).group(0)
 
     pass
+

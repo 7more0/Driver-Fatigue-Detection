@@ -11,15 +11,15 @@ from ModelConfig import ModelConfig
 '''
 # training config
 model_config = ModelConfig()
-train_feature_path = './out/train_clip_feature_sample.pkl'      # feature file path
-val_feature_path = './out/val_clip_feature_sample.pkl'
+train_feature_path = './out/train_clip_feature_sample_10.pkl'      # feature file path
+val_feature_path = './out/val_clip_feature_sample_10.pkl'
 feature_batch_size = model_config.feature_batchsize
-clip_feature_size = (model_config.lstm_step, 1024)      # (lstm input node dim, feature dim)
+clip_feature_size = (model_config.lstm_step, model_config.cnn_feature_dim)      # (lstm input node dim, feature dim)
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 callback_list = [
-    ModelCheckpoint(filepath='./out/lstm_weight.h5', monitor='val_loss', save_best_only=True),
-    TensorBoard(log_dir='./out/tensorboard/'+ 'lstm'+ datetime.now().strftime("%Y%m%d-%H%M%S"), histogram_freq=1, embeddings_freq=1)
+    ModelCheckpoint(filepath='./out/lstm_weight_10.h5', monitor='val_loss', save_best_only=True),
+    TensorBoard(log_dir='./out/tensorboard/'+ 'lstm_10_'+ datetime.now().strftime("%Y%m%d-%H%M%S"), histogram_freq=1, embeddings_freq=1)
 ]
 # load data
 with open(train_feature_path, 'rb') as file:
@@ -34,6 +34,7 @@ train_feature_generator = feature_generator(train_feature_data, labels=labels, b
 val_feature_generator = feature_generator(val_feature_data, labels, batch_size=feature_batch_size, clip_feature_shape=clip_feature_size)
 # LSTM model
 lstmModel = LSTM_model(model_config.lstm_step)
+lstmModel.summary()
 lstmModel._get_distribution_strategy = lambda: None
 lstmModel.compile(optimizer=adam(lr=0.001, decay=1e-6), loss='categorical_crossentropy', metrics=['accuracy'])
 
@@ -43,10 +44,10 @@ lstmModel_history = lstmModel.fit_generator(
     steps_per_epoch=4,
     validation_data=val_feature_generator,
     validation_steps=1,
-    epochs=32,
+    epochs=64,
     callbacks=callback_list
 )
-lstmModel.save('./out/lstm_weight_final.h5')
-with open('./out/lstmModel_history.pkl', 'wb') as file:
-    pickle.dump(lstmModel_history.history, file)
-    file.close()
+# lstmModel.save('./out/lstm_weight_final_2.h5')
+# with open('./out/lstmModel_history_2.pkl', 'wb') as file:
+#     pickle.dump(lstmModel_history.history, file)
+#     file.close()

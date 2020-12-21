@@ -90,7 +90,7 @@ def video_to_imgs(folder_path, name, out_path, frame_gap=1, frame_num=False):
             break
         if count % frame_gap==0:
             # file name format video_name-frame_index.jpg
-            cv2.imwrite("{}{}{}.jpg".format(out_path, name.strip('.avi'), count),
+            cv2.imwrite("{}{}_{}.jpg".format(out_path, name.strip('.avi'), count),
                     image)
         if cv2.waitKey(10) == 27:
             break

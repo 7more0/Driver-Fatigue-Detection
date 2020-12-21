@@ -15,9 +15,13 @@ class ModelConfig:
             'horizontal_flip': True
         }       # data augment setting
         self.cnn_input_shape = (299, 299)       # input img shape of cnn model
-        self.lstm_step = 30                     # lstm input node number
-        self.cnn_frame_data_batchsize = 64      # frame batch size when training cnn
+        self.sample_ratio = 0.1
+        self.lstm_step = int(90*self.sample_ratio)                     # lstm input node number
 
+        self.cnn_feature_dim = 1024
+        self.output_classes = 2
+
+        self.cnn_frame_data_batchsize = 64      # frame batch size when training cnn
         self.labels = {'normal': np.array([1, 0]),
                        'yawning': np.array([0, 1])}
         self.feature_batchsize = 64     # clip batch size when training lstm
