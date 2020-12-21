@@ -58,7 +58,11 @@ No human face or facial organ detection is required.
 ## Test
 1. run `test.py` to test model on test dataset.
 
+## End to end model
+1. to train the end to end model, configure model in `ModelConfig.py` and then run `Implement.py`.
+
 ## Notice
 * trained model weights and preprocessed data will be writen in `./out`
 * log path of TensorBoard is `./out/tensorboard`
+* end to end model training will require large amount of computation resources, multi-gpu training is recommended.
 
