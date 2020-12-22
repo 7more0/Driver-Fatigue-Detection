@@ -62,7 +62,9 @@ No human face or facial organ detection is required.
 1. to train the end to end model, configure model in `ModelConfig.py` and then run `Implement.py`.
 
 ## Notice
-* trained model weights and preprocessed data will be writen in `./out`
+* trained model weights and preprocessed data will be writen in `./out`   
+    - model weights files: `Inception_weight.h5`, `lstm_weight.h5`...    
+    - preprocessed data: `train_clip_feature_sample.pkl`, `val_clip_feature_sample.pkl`...
 * log path of TensorBoard is `./out/tensorboard`
 * end to end model training will require large amount of computation resources, multi-gpu training is recommended.
 
