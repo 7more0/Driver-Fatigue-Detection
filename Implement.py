@@ -6,7 +6,10 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from datetime import datetime
 import os
 from keras.utils import multi_gpu_model
-
+'''
+    end to end implementation of model.
+    end to end model training will require large amount of computation resource, multi-gpu training is recommend.
+'''
 # training config
 model_config = ModelConfig()
 train_read_path = './Datasets/YawDD/train/lstm/train/video'

@@ -15,7 +15,7 @@ class ModelConfig:
             'horizontal_flip': True
         }       # data augment setting
         self.cnn_input_shape = (299, 299)       # input img shape of cnn model
-        self.sample_ratio = 0.1
+        self.sample_ratio = 1
         self.lstm_step = int(90*self.sample_ratio)                     # lstm input node number
 
         self.cnn_feature_dim = 1024
